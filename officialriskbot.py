@@ -19,7 +19,7 @@ import discord
 from discord.ext.commands import bot
 from discord.ext import commands
 
-db_path = "risk-db-2.db"
+db_path = "risk.db"
 
 # Boolean
 
@@ -1037,9 +1037,9 @@ async def games(ctx):
                 done1 = done.strftime("%M")
                 uptime = int(done1) - start_time
                 await ctx.channel.send(gameStr)
-                if uptime is 0:
+                if uptime == 0:
                     await ctx.channel.send("Uptime: a few seconds.")
-                if uptime is 1:
+                if uptime ==  1:
                     await ctx.channel.send("Uptime: " + str(uptime) + " minute.")
                 if uptime > 1:
                     await ctx.channel.send("Uptime: " + str(uptime) + " minutes.")
@@ -1112,9 +1112,9 @@ async def games(ctx):
                 done1 = done.strftime("%M")
                 uptime = int(done1) - start_time
                 await ctx.channel.send(gameStr)
-                if uptime is 0:
+                if uptime == 0:
                     await ctx.channel.send("Uptime: a few seconds.")
-                if uptime is 1:
+                if uptime == 1:
                     await ctx.channel.send("Uptime: " + str(uptime) + " minute.")
                 if uptime > 1:
                     await ctx.channel.send("Uptime: " + str(uptime) + " minutes.")
@@ -1192,9 +1192,9 @@ async def games(ctx):
                 done1 = done.strftime("%M")
                 uptime = int(done1) - start_time
                 await ctx.channel.send(gameStr)
-                if uptime is 0:
+                if uptime == 0:
                     await ctx.channel.send("Uptime: a few seconds.")
-                if uptime is 1:
+                if uptime == 1:
                     await ctx.channel.send("Uptime: " + str(uptime) + " minute.")
                 if uptime > 1:
                     await ctx.channel.send("Uptime: " + str(uptime) + " minutes.")
@@ -2583,11 +2583,11 @@ async def stats(ctx):
         if total_games == 0:
             await ctx.channel.send(f"{name} played no games and has an elo of **{elo:.1f}**.")
         else:
-            await ctx.channel.send(f"**{name}** has played **{total_games}** games with a win rate of **{(win / total_games) * 100:.1f}%** (**{win}**W - **{loss}**L). ELO: **{elo:.1f}**. Sigma: **{sigma:.1f}**. Streak: **{streak}**. Rank: **{rank if rank else "Need 20 games minimum."}**.")
+            await ctx.channel.send(f"**{name}** has played **{total_games}** games with a win rate of **{(win / total_games) * 100:.1f}%** (**{win}**W - **{loss}**L). ELO: **{elo:.1f}**. Sigma: **{sigma:.1f}**. Streak: **{streak}**. Rank: **{rank if rank else 'Need 20 games minimum.'}**.")
         
         grandmaster = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/grandmaster.png"
         master = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/master.png"
-        adept = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/adept.png""
+        adept = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/adept.png"
         diamond = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/diamond.png"
         platinum = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/platinum.png"
         gold = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/gold.png"
@@ -4560,4 +4560,4 @@ async def simulate(ctx, *args):
 
     conn.close()
     
-client.run("Nzg1MDA4MzE2ODgzNDAyNzc0.X8xl9w.woujElelGS5EGInzerRzZOIPSmc")  # client auth key (found in discord api)
+client.run("XXXxX")
