@@ -2585,13 +2585,15 @@ async def stats(ctx):
         else:
             await ctx.channel.send(f"**{name}** has played **{total_games}** games with a win rate of **{(win / total_games) * 100:.1f}%** (**{win}**W - **{loss}**L). ELO: **{elo:.1f}**. Sigma: **{sigma:.1f}**. Streak: **{streak}**. Rank: **{rank if rank else "Need 20 games minimum."}**.")
         
-        grandmaster = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/grandmaster.png"
-        master = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/master.png"
-        diamond = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/diamond.png"
-        platinum = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/platinum.png"
-        gold = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/gold.png"
-        silver = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/silver.png"
-        bronze = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/bronze.png"
+        grandmaster = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/grandmaster.png"
+        master = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/master.png"
+        adept = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/adept.png""
+        diamond = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/diamond.png"
+        platinum = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/platinum.png"
+        gold = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/gold.png"
+        silver = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/silver.png"
+        bronze = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/bronze.png"
+        grass = "https://raw.githubusercontent.com/KaramAbuaisha/Risk-bot/clean/assets/league-icons/grass.png"
 
         if rank == 1:
             url = grandmaster
