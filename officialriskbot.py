@@ -287,10 +287,10 @@ async def leaderboard_team(ctx):
                                                                             player[1], player[2], int(round(player[3])), int(round(player[7])),
                                                                             str(winrate) + "%", (player[3])) + "" + "\n"
             c.execute("UPDATE players_team SET rank = ? WHERE ID = ?", [i,player[5]])
-            i = i + 1
-            if i % 10 == 0:
-                await leaderboard_channel.send(msg + '```')
-                msg = "```\n"
+            # i = i + 1
+            # if i % 10 == 0:
+            #     await leaderboard_channel.send(msg + '```')
+            #     msg = "```\n"
     c.execute("SELECT MAX(ELO), ID from PLAYERS_TEAM")
     player = c.fetchone()[1]
     member = guild.get_member(player)
@@ -318,38 +318,37 @@ async def leaderboard_solo(ctx):
     msg = "```\n"
     msg = msg + "{:<4}  {:<25}  {:<10} {:<10} {:<10}".format('RANK', 'NAME', 'ELO', 'SIGMA', 'TOTAL GAMES') + "" + "\n"
 
-    for player in c.execute("SELECT name, win, loss, elo, record, id, lowest, sigma FROM players ORDER BY elo desc"):
+    for player in c.execute("SELECT name, win, loss, elo, record, id, lowest, sigma FROM players WHERE win + loss > 19 ORDER BY elo desc"):
         leader_board.append(player)
 
-    for player in leader_board:
-        names = safeName(player[0][:20])
+    for i, player in enumerate(leader_board):
+        name = safeName(player[0][:20])
         # member = guild.get_member(player[5])
 
         # if member is not None:
         #     if member.nick is not None:
-        #         names = member.nick
+        #         name = member.nick
         #     else:
-        #         names = member.name
+        #         name = member.name
         # else:
-        #     names = player[0]
+        #     name = player[0]
 
                 
         total_games = int(player[1]) + int(player[2])
         sigma = int(round(player[7]))
 
-        if total_games > 19:
+        c.execute("UPDATE players SET rank = ? WHERE ID = ?", [i+1, player[5]])
 
-            if player[4] == None or player[3] > player[4]:
-                c.execute("UPDATE players SET record = ? where ID = ?", [int(round(player[3])), player[5]])
+        if player[4] == None or player[3] > player[4]:
+            c.execute("UPDATE players SET record = ? where ID = ?", [int(round(player[3])), player[5]])
 
-            msg = msg + "{:<4}  {:<25}  {:<10}  {:<10}  {:<10}".format('#' + str(i), names,
-                                                                            int(round(player[3])), int(round(player[7])), int(total_games)) + "" + "\n"
-            c.execute("UPDATE players SET rank = ? WHERE ID = ?", [i,player[5]])
-            i = i + 1
-            if i % 10 == 0:
-                await leaderboard_channel.send(msg + '```')
-                msg = "```\n"
-    c.execute("SELECT MAX(ELO), ID from PLAYERS")
+        msg += "{:<4}  {:<25}  {:<10}  {:<10}  {:<10}".format('#' + str(i+1), name,
+                                                                        int(round(player[3])), int(round(player[7])), int(total_games)) + "" + "\n"
+        # if i + 1 % 10 == 0:
+        #     await leaderboard_channel.send(msg + '```')
+        #     msg = "```\n"
+
+    c.execute("SELECT MAX(ELO), ID from PLAYERS WHERE win + loss > 19")
     player = c.fetchone()[1]
     member = guild.get_member(player)
     role = discord.utils.get(ctx.guild.roles, name="Rank 1 Solo")
@@ -2544,161 +2543,88 @@ async def game(ctx, result):
 async def stats(ctx):
     '''Shows a players statistics.'''
 
-    global PLAYERS, PLAYERS2, PLAYERS3, db_path, joined_dic
+    global db_path, joined_dic
 
-    if ctx.channel.id == ones_channel.id:
+    
+    # if ctx.channel.id == ones_channel.id:
+    #     players_table = "players"
+    # elif ctx.channel.id == twos_channel.id or ctx.channel.id == threes_channel.id:
+    #     players_table = "players_team"
+    # else:
+    #     return
 
-        x = ctx.author.id
-        joined_dic[x] = gettime()
-            
-        name = str(ctx.message.content)[7:]
-        t = find_userid_by_name(ctx, name)
-        if t is None:
-            await ctx.channel.send("No user found by that name!")
-            return
-
-        conn = sqlite3.connect(db_path, uri=True)
-
-        c = conn.cursor()
-        c.execute("SELECT name, elo, win, loss, streak, profile, fresh_warns, record, perms, rank, sigma FROM players where ID = ?", [t])
-        player = c.fetchone()
-
-        if player is not None:
-            name = player[0]
-            pts = int(round(player[1]))
-            win = player[2]
-            loss = player[3]
-            streak = player[4]
-            url = player[5]
-            warns = player[6]
-            peak = player[7]
-            description = player[8]
-            rank = player[9]
-            sigma = int(round(player[10]))
-            total_games = win + loss
-            if streak > 0:
-                streak = f"{streak}"
-            if total_games == 0:
-                # embed = discord.Embed(
-                #     colour=0x1F1E1E
-                # )
-                # embed.set_thumbnail(url=url)
-                # embed.add_field(name=f"{name}\n\u200b",
-                #                 value=f'**{name}** has played no games and has an elo of **{pts}**.', inline=False)
-                # await ctx.send(embed=embed)
-                await ctx.channel.send(name + " played no games and has an elo of **" + str(pts) + "**.")
-            else:
-                winrate = float("{0:.2f}".format((win / total_games) * 100))
-                # await ctx.channel.send(name + "(" + str(pts) + ") has " + str(total_games) + " games played, " + str(win) + " wins, " + str(loss) + " losses.\nWinrate: " + str(winrate) + "%\nStreak: 0.")
-                await ctx.channel.send("**" + name + "** has played **" + str(total_games) + "** games with a win rate of **" + str(winrate) + "%** (**" + str(win) + "**W - **" + str(loss) + "**L). Their ELO: **" + str(pts) + "**. Sigma: **" + str(sigma) + "**. Streak: **" + str(streak) + "**. Rank: **" + str(rank) + "**.")
-                # embed = discord.Embed(
-                #     colour = 0x1F1E1E
-                # )
-                # embed.add_field(name="Statistics\n\u200b", value=f'**{name}** has played a total of **{total_games}** games with a win rate of **{winrate}**%\nCurrent win streak: **{winstreak}**; Current loss streak: **{loss_streak}**; Warnings: **{warns}**', inline=False)
-                # embed.add_field(name='\n\u200b', value=f'ELO: **{pts}**')
-                # embed.add_field(name='\n\u200b', value=f'Wins: **{win}**')
-                # embed.add_field(name='\n\u200b', value=f'Losses: **{loss}**')
-
-                # await ctx.channel.send(embed=embed)
-                # embed = discord.Embed(
-                #     colour=0x1F1E1E
-                # )
-                # embed.set_thumbnail(url=url)
-                # embed.add_field(name=f"{name}\n\u200b",
-                #                 value=f'**{name}** has played a total of **{total_games}** games with a win rate of **{winrate}**%',
-                #                 inline=False)
-                # embed.add_field(name='\n\u200b', value=f'ELO: **{pts}**')
-                # embed.add_field(name='\n\u200b', value=f'Wins: **{win}**')
-                # embed.add_field(name='\n\u200b', value=f'Losses: **{loss}**')
-                # embed.add_field(name='\n\u200b', value=f'Streak: **{streak}**')
-                # embed.add_field(name='\n\u200b', value=f'Warnings: **{warns}**/**4**')
-                # embed.add_field(name='\n\u200b', value=f'Peak: **{peak}**\n')
-                # embed.add_field(name='\n\u200b', value=f"**Additional Information**\n\n{description}")
-                # embed.set_footer(text="\n\u200bTip: You can change your profile picture by typing !profile add link.")
-                # embed.set_footer(text="Tip: [You can change your picture by typing !profile add (link)](https://cdn1.bbcode0.com/uploads/2020/7/1/888ce487a07a840bf8f6c2bc7f842252-full.jpg")
-                # await ctx.send(embed=embed)
-        else:
-            await ctx.channel.send("No user found by that name!")
-
-        conn.commit()
-        conn.close()
+    teams = False
+    players_table = "players"
 
     if ctx.channel.id == twos_channel.id or ctx.channel.id == threes_channel.id:
+        teams = True
+        players_table += "_team"
+        
+    x = ctx.author.id
+    joined_dic[x] = gettime()
+        
+    name = str(ctx.message.content)[7:]
+    t = find_userid_by_name(ctx, name)
+    if t is None:
+        await ctx.channel.send("No user found by that name!")
+        return
 
-        x = ctx.author.id
-        joined_dic[x] = gettime()
-            
-        name = str(ctx.message.content)[7:]
-        t = find_userid_by_name(ctx, name)
-        if t is None:
-            await ctx.channel.send("No user found by that name!")
-            return
+    conn = sqlite3.connect(db_path, uri=True)
 
-        conn = sqlite3.connect(db_path, uri=True)
+    c = conn.cursor()
+    c.execute(f"SELECT name, elo, sigma, win, loss, streak, record, rank FROM {players_table} where ID = ?", [t])
+    player = c.fetchone()
 
-        c = conn.cursor()
-        c.execute("SELECT name, elo, win, loss, streak, profile, fresh_warns, record, perms, rank, sigma FROM players_team where ID = ?", [t])
-        player = c.fetchone()
-
-        if player is not None:
-            name = player[0]
-            pts = int(round(player[1]))
-            win = player[2]
-            loss = player[3]
-            streak = player[4]
-            url = player[5]
-            warns = player[6]
-            peak = player[7]
-            description = player[8]
-            rank = player[9]
-            sigma = int(round(player[10]))
-            total_games = win + loss
-            if streak > 0:
-                streak = f"{streak}"
-            if total_games == 0:
-                # embed = discord.Embed(
-                #     colour=0x1F1E1E
-                # )
-                # embed.set_thumbnail(url=url)
-                # embed.add_field(name=f"{name}\n\u200b",
-                #                 value=f'**{name}** has played no games and has an elo of **{pts}**.', inline=False)
-                # await ctx.send(embed=embed)
-                await ctx.channel.send(name + " played no games and has an elo of **" + str(pts) + "**.")
-            else:
-                winrate = float("{0:.2f}".format((win / total_games) * 100))
-                # await ctx.channel.send(name + "(" + str(pts) + ") has " + str(total_games) + " games played, " + str(win) + " wins, " + str(loss) + " losses.\nWinrate: " + str(winrate) + "%\nStreak: 0.")
-                await ctx.channel.send("**" + name + "** has played **" + str(total_games) + "** games with a win rate of **" + str(winrate) + "%** (**" + str(win) + "**W - **" + str(loss) + "**L). Their ELO: **" + str(pts) + "**. Sigma: **" + str(sigma) + "**. Streak: **" + str(streak) + "**. Rank: **" + str(rank) + "**.")
-                # embed = discord.Embed(
-                #     colour = 0x1F1E1E
-                # )
-                # embed.add_field(name="Statistics\n\u200b", value=f'**{name}** has played a total of **{total_games}** games with a win rate of **{winrate}**%\nCurrent win streak: **{winstreak}**; Current loss streak: **{loss_streak}**; Warnings: **{warns}**', inline=False)
-                # embed.add_field(name='\n\u200b', value=f'ELO: **{pts}**')
-                # embed.add_field(name='\n\u200b', value=f'Wins: **{win}**')
-                # embed.add_field(name='\n\u200b', value=f'Losses: **{loss}**')
-
-                # await ctx.channel.send(embed=embed)
-                # embed = discord.Embed(
-                #     colour=0x1F1E1E
-                # )
-                # embed.set_thumbnail(url=url)
-                # embed.add_field(name=f"{name}\n\u200b",
-                #                 value=f'**{name}** has played a total of **{total_games}** games with a win rate of **{winrate}**%',
-                #                 inline=False)
-                # embed.add_field(name='\n\u200b', value=f'ELO: **{pts}**')
-                # embed.add_field(name='\n\u200b', value=f'Wins: **{win}**')
-                # embed.add_field(name='\n\u200b', value=f'Losses: **{loss}**')
-                # embed.add_field(name='\n\u200b', value=f'Streak: **{streak}**')
-                # embed.add_field(name='\n\u200b', value=f'Warnings: **{warns}**/**4**')
-                # embed.add_field(name='\n\u200b', value=f'Peak: **{peak}**\n')
-                # embed.add_field(name='\n\u200b', value=f"**Additional Information**\n\n{description}")
-                # embed.set_footer(text="\n\u200bTip: You can change your profile picture by typing !profile add link.")
-                # embed.set_footer(text="Tip: [You can change your picture by typing !profile add (link)](https://cdn1.bbcode0.com/uploads/2020/7/1/888ce487a07a840bf8f6c2bc7f842252-full.jpg")
-                # await ctx.send(embed=embed)
+    if player is not None:
+        name, elo, sigma, win, loss, streak, peak_elo, rank = player
+        total_games = win + loss
+        if streak > 0:
+            streak = f"{streak}"
+        if total_games == 0:
+            await ctx.channel.send(f"{name} played no games and has an elo of **{elo:.1f}**.")
         else:
-            await ctx.channel.send("No user found by that name!")
+            await ctx.channel.send(f"**{name}** has played **{total_games}** games with a win rate of **{(win / total_games) * 100:.1f}%** (**{win}**W - **{loss}**L). ELO: **{elo:.1f}**. Sigma: **{sigma:.1f}**. Streak: **{streak}**. Rank: **{rank if rank else "Need 20 games minimum."}**.")
+        
+        grandmaster = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/grandmaster.png"
+        master = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/master.png"
+        diamond = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/diamond.png"
+        platinum = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/platinum.png"
+        gold = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/gold.png"
+        silver = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/silver.png"
+        bronze = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/bronze.png"
 
-        conn.commit()
-        conn.close()
+        if rank == 1:
+            url = grandmaster
+            emoji = "<:0_:799828770110439425>"
+
+        if 2 <= rank and rank <= 4:
+            url = master
+            emoji = "<:1_:799828770402861146>"
+        
+        if 5 <= rank and rank <= 8:
+            url = diamond
+            emoji = "<:2_:799828770470363136>"
+
+        if 9 <= rank and rank <= 13:
+            url = platinum
+            emoji = "<:3_:799828770100871220>"
+
+        if 14 <= rank and rank <= 19:
+            url = gold
+            emoji = "<:4_:799828770541928478>"
+
+        if 20 <= rank and rank <= 30:
+            url = silver
+            emoji = "<:5_:799828770562244639>"
+        
+        if rank > 30:
+            url = bronze
+            emoji = "<:6_:799828770651111445>"
+    else:
+        await ctx.channel.send("No user found by that name!")
+
+    conn.commit()
+    conn.close()
 
 @client.command()
 @commands.cooldown(1, 5, commands.BucketType.user)
@@ -3049,7 +2975,7 @@ async def compare(ctx, p1, p2):
 
     """Compares two users statistics.""" 
 
-    global PLAYERS, db_path, joined_dic
+    global db_path, joined_dic
 
     if ctx.channel.id == ones_channel.id:
 

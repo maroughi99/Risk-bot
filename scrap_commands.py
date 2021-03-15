@@ -283,3 +283,134 @@ async def unban(ctx, name):
         await member.add_roles(banjo_role)
         await ctx.send("**" + str(names) + "** was unbanned by **" + str(n) + "**.")
         await activity_channel.send("**" + str(names) + "** was unbanned by **" + str(n) + "**.")
+
+@client.command()
+async def stats(ctx):
+    '''Shows a players statistics.'''
+
+    global db_path, joined_dic
+
+    if ctx.channel.id == na_lobby_channel.id or ctx.channel.id == admin_channel.id:
+
+        x = ctx.author.id
+        joined_dic[x] = gettime()
+            
+        name = str(ctx.message.content)[7:]
+        t = find_userid_by_name(ctx, name)
+        if t is None:
+            await ctx.channel.send("No user found by that name!")
+            return
+
+        conn = sqlite3.connect(db_path, uri=True)
+
+        c = conn.cursor()
+        c.execute("SELECT name, elo, win, loss, streak, profile, fresh_warns, record, perms, rank FROM players where ID = ?", [t])
+        player = c.fetchone()
+
+        if player is not None:
+            name = player[0]
+            pts = player[1]
+            win = player[2]
+            loss = player[3]
+            streak = player[4]
+            warns = player[6]
+            peak = player[7]
+            description = player[8]
+            rank = player[9]
+            total_games = win + loss
+            c.execute("SELECT total_warns FROM warnings WHERE ID = ?", [t])
+            warnings = c.fetchone()[0]
+
+            grandmaster = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/grandmaster.png"
+            master = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/master.png"
+            diamond = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/diamond.png"
+            platinum = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/platinum.png"
+            gold = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/gold.png"
+            silver = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/silver.png"
+            bronze = "https://raw.githubusercontent.com/w3champions/w3champions-ui/master/src/assets/leagueFlags/bronze.png"
+
+            if streak > 0:
+                streak = f"{streak}"
+            if total_games == 0:
+                await ctx.channel.send(name + " played no games and has an elo of **" + str(pts) + "**.")
+
+            if rank < 3:
+                url = grandmaster
+                emoji = "<:0_:799828770110439425>"
+
+            if rank > 2 < 7:
+                url = master
+                emoji = "<:1_:799828770402861146>"
+            
+            if rank > 6 < 13:
+                url = diamond
+                emoji = "<:2_:799828770470363136>"
+
+            if rank > 11 < 20:
+                url = platinum
+                emoji = "<:3_:799828770100871220>"
+
+            if rank > 19 < 26:
+                url = gold
+                emoji = "<:4_:799828770541928478>"
+
+            if rank > 24 < 31:
+                url = silver
+                emoji = "<:5_:799828770562244639>"
+            
+            if rank > 29:
+                url = bronze
+                emoji = "<:6_:799828770651111445>"
+
+            conn = sqlite3.connect(db_path)
+            c = conn.cursor()
+            c.execute("SELECT p1,p2,p3,p4,p5,p6,p7,p8,id,s1,s2 FROM games WHERE (p1 == ? OR p2 == ? or p3 == ? or p4 == ? or p5 == ? or p6 == ? or p7 == ? or p8 == ?) AND (s1 is not NULL or s2 is not NULL) ORDER BY ID DESC LIMIT 10", [t,t,t,t,t,t,t,t])
+            recent_games = c.fetchall()
+
+            recent_perf = ""
+
+            # for emoji in ctx.guild.emojis:
+            #     print(f"{emoji.id} - {emoji.name}")
+
+            for items in recent_games:
+                team = 1 if t in items[0:4] else 2
+                s1 = items[9]
+                s2 = items[10]
+                if team == 1:
+                    if s1 > s2:
+                        recent_perf += "W"
+                    else:
+                        recent_perf+= "L"
+                                    
+                else:
+                    if s2 > s1:
+                        recent_perf += "W"
+                    else:
+                        recent_perf += "L"
+
+            rp = "-".join(recent_perf)
+
+            if int(streak) > 0:
+                streak = f"{streak}"
+
+            if total_games == 0:
+                await ctx.channel.send(name + " played no games and has an elo of **" + str(pts) + "**.")
+
+            else:
+                winrate = float("{0:.2f}".format((win / total_games) * 100)) 
+                embed = discord.Embed(
+                    colour=0x1F1E1E
+                )
+                embed.set_thumbnail(url=f"{url}")
+                embed.add_field(name=f"{name} {emoji}\n\u200b",
+                                value=f"RANK: **{rank}** | **{win}**W-**{loss}**L **{winrate}**%\n\nRecent Performance:\n{rp}",
+                                inline=False)
+                embed.add_field(name='\n\u200b', value=f'ELO: **{pts}**')
+                embed.add_field(name='\n\u200b', value=f'Peak: **{peak}**')
+                await ctx.send(embed=embed)
+
+        else:
+            await ctx.channel.send("No user found by that name!")
+
+        conn.commit()
+        conn.close()
